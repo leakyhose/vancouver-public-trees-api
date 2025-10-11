@@ -19,6 +19,16 @@ with engine.begin() as conn:
     print("Wiping old data")
     conn.execute(text("TRUNCATE TABLE trees;"))
     
+    print("Uploading new data")
+    df.to_sql('trees_temp', conn, if_exists='replace', index=False, method='multi')
     
+    print("Creating PostGIS geometries")
+    conn.execute(text("""
+        INSERT INTO trees 
+        SELECT *, ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) as geom
+        FROM trees_temp;
+    """))
+    
+
 
 print("Data ingestion complete!")
