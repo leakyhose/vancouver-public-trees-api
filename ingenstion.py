@@ -29,6 +29,12 @@ with engine.begin() as conn:
         FROM trees_temp;
     """))
     
+    conn.execute(text("DROP TABLE trees_temp;"))
+    
+    result = conn.execute(text("SELECT COUNT(*) FROM trees;"))
+    count = result.fetchone()[0]
+    print(f"Successfully uploaded {count} records to trees table")
+    
 
 
 print("Data ingestion complete!")
