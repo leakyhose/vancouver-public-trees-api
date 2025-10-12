@@ -24,8 +24,15 @@ with engine.begin() as conn:
     
     print("Creating PostGIS geometries")
     conn.execute(text("""
-        INSERT INTO trees 
-        SELECT *, ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) as geom
+        INSERT INTO trees (tree_id, civic_number, std_street, genus_name, species_name, 
+                          cultivar_name, common_name, on_street_block, on_street, 
+                          neighbourhood_name, street_side_name, height_range_id, 
+                          height_range, diameter, date_planted, geom)
+        SELECT tree_id, civic_number, std_street, genus_name, species_name, 
+               cultivar_name, common_name, on_street_block, on_street, 
+               neighbourhood_name, street_side_name, height_range_id, 
+               height_range, diameter, date_planted, 
+               ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) as geom
         FROM trees_temp;
     """))
     
