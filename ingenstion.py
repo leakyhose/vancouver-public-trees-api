@@ -31,7 +31,7 @@ with engine.begin() as conn:
         SELECT tree_id, civic_number, std_street, genus_name, species_name, 
                cultivar_name, common_name, on_street_block, on_street, 
                neighbourhood_name, street_side_name, height_range_id, 
-               height_range, diameter, date_planted, 
+               height_range, diameter, date_planted::DATE, 
                ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) as geom
         FROM trees_temp;
     """))
