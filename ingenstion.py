@@ -36,6 +36,13 @@ with engine.begin() as conn:
         FROM trees_temp;
     """))
     
+    print("Creating GiST index on geometry column")
+    conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS trees_geom_gist
+        ON trees
+        USING GIST (geom);
+    """))
+    
     conn.execute(text("DROP TABLE trees_temp;"))
     
     result = conn.execute(text("SELECT COUNT(*) FROM trees;"))
