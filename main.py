@@ -28,3 +28,42 @@ async def health_db():
         return {"status": "ok", "database": "connected"}
     except Exception:
         raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+@app.get("/api/v1/trees/{tree_id}")
+async def get_tree(tree_id: int):
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT tree_id, civic_number, std_street, genus_name, species_name,
+                   cultivar_name, common_name, on_street_block, on_street,
+                   neighbourhood_name, street_side_name, height_range_id,
+                   height_range, diameter, date_planted,
+                   ST_X(geom) as longitude, ST_Y(geom) as latitude
+            FROM trees WHERE tree_id = :id
+        """), {"id": tree_id})
+        row = result.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Tree not found")
+
+    return {
+        "id": row.tree_id,
+        "civic_number": row.civic_number,
+        "std_street": row.std_street,
+        "genus_name": row.genus_name,
+        "species_name": row.species_name,
+        "cultivar_name": row.cultivar_name,
+        "common_name": row.common_name,
+        "on_street_block": row.on_street_block,
+        "on_street": row.on_street,
+        "neighbourhood_name": row.neighbourhood_name,
+        "street_side_name": row.street_side_name,
+        "height_range_id": row.height_range_id,
+        "height_range": row.height_range,
+        "diameter": row.diameter,
+        "date_planted": str(row.date_planted) if row.date_planted else None,
+        "geometry": {
+            "type": "Point",
+            "coordinates": [row.longitude, row.latitude]
+        }
+    }
