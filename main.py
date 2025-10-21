@@ -33,19 +33,32 @@ async def health_db():
 @app.get("/api/v1/trees")
 async def list_trees(
     limit: int = Query(default=50, le=100),
-    offset: int = Query(default=0, ge=0)
+    offset: int = Query(default=0, ge=0),
+    species: str = Query(default=None)
 ):
+    filters = []
+    params = {"limit": limit, "offset": offset}
+
+    if species:
+        filters.append("species_name = :species")
+        params["species"] = species
+
+    where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
+
     with engine.connect() as conn:
-        count_result = conn.execute(text("SELECT COUNT(*) FROM trees"))
+        count_result = conn.execute(
+            text(f"SELECT COUNT(*) FROM trees {where_clause}"), params
+        )
         total = count_result.scalar()
 
-        result = conn.execute(text("""
+        result = conn.execute(text(f"""
             SELECT tree_id, genus_name, species_name, common_name, height_range_id,
                    ST_X(geom) as longitude, ST_Y(geom) as latitude
             FROM trees
+            {where_clause}
             ORDER BY tree_id
             LIMIT :limit OFFSET :offset
-        """), {"limit": limit, "offset": offset})
+        """), params)
         rows = result.fetchall()
 
     data = [{
