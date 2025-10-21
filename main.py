@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
@@ -28,6 +28,42 @@ async def health_db():
         return {"status": "ok", "database": "connected"}
     except Exception:
         raise HTTPException(status_code=503, detail="Database unavailable")
+
+
+@app.get("/api/v1/trees")
+async def list_trees(
+    limit: int = Query(default=50, le=100),
+    offset: int = Query(default=0, ge=0)
+):
+    with engine.connect() as conn:
+        count_result = conn.execute(text("SELECT COUNT(*) FROM trees"))
+        total = count_result.scalar()
+
+        result = conn.execute(text("""
+            SELECT tree_id, genus_name, species_name, common_name, height_range_id,
+                   ST_X(geom) as longitude, ST_Y(geom) as latitude
+            FROM trees
+            ORDER BY tree_id
+            LIMIT :limit OFFSET :offset
+        """), {"limit": limit, "offset": offset})
+        rows = result.fetchall()
+
+    data = [{
+        "id": row.tree_id,
+        "genus_name": row.genus_name,
+        "species_name": row.species_name,
+        "common_name": row.common_name,
+        "height_range_id": row.height_range_id,
+        "geometry": {
+            "type": "Point",
+            "coordinates": [row.longitude, row.latitude]
+        }
+    } for row in rows]
+
+    return {
+        "metadata": {"limit": limit, "offset": offset, "total": total},
+        "data": data
+    }
 
 
 @app.get("/api/v1/trees/{tree_id}")
