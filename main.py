@@ -34,7 +34,8 @@ async def health_db():
 async def list_trees(
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0),
-    species: str = Query(default=None)
+    species: str = Query(default=None),
+    genus: str = Query(default=None)
 ):
     filters = []
     params = {"limit": limit, "offset": offset}
@@ -42,6 +43,9 @@ async def list_trees(
     if species:
         filters.append("species_name = :species")
         params["species"] = species
+    if genus:
+        filters.append("genus_name = :genus")
+        params["genus"] = genus
 
     where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
