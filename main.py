@@ -36,7 +36,8 @@ async def list_trees(
     offset: int = Query(default=0, ge=0),
     species: str = Query(default=None),
     genus: str = Query(default=None),
-    common_name: str = Query(default=None)
+    common_name: str = Query(default=None),
+    neighborhood: str = Query(default=None)
 ):
     filters = []
     params = {"limit": limit, "offset": offset}
@@ -50,6 +51,9 @@ async def list_trees(
     if common_name:
         filters.append("common_name = :common_name")
         params["common_name"] = common_name
+    if neighborhood:
+        filters.append("neighbourhood_name = :neighborhood")
+        params["neighborhood"] = neighborhood
 
     where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
