@@ -39,7 +39,9 @@ async def list_trees(
     common_name: str = Query(default=None),
     neighborhood: str = Query(default=None),
     min_height: int = Query(default=None),
-    max_height: int = Query(default=None)
+    max_height: int = Query(default=None),
+    planted_after: str = Query(default=None),
+    planted_before: str = Query(default=None)
 ):
     filters = []
     params = {"limit": limit, "offset": offset}
@@ -62,6 +64,12 @@ async def list_trees(
     if max_height is not None:
         filters.append("height_range_id <= :max_height")
         params["max_height"] = max_height
+    if planted_after:
+        filters.append("date_planted >= :planted_after")
+        params["planted_after"] = planted_after
+    if planted_before:
+        filters.append("date_planted <= :planted_before")
+        params["planted_before"] = planted_before
 
     where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
