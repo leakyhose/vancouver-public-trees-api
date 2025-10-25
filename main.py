@@ -37,7 +37,9 @@ async def list_trees(
     species: str = Query(default=None),
     genus: str = Query(default=None),
     common_name: str = Query(default=None),
-    neighborhood: str = Query(default=None)
+    neighborhood: str = Query(default=None),
+    min_height: int = Query(default=None),
+    max_height: int = Query(default=None)
 ):
     filters = []
     params = {"limit": limit, "offset": offset}
@@ -54,6 +56,12 @@ async def list_trees(
     if neighborhood:
         filters.append("neighbourhood_name = :neighborhood")
         params["neighborhood"] = neighborhood
+    if min_height is not None:
+        filters.append("height_range_id >= :min_height")
+        params["min_height"] = min_height
+    if max_height is not None:
+        filters.append("height_range_id <= :max_height")
+        params["max_height"] = max_height
 
     where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
