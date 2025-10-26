@@ -107,6 +107,14 @@ async def list_trees(
     }
 
 
+@app.get("/api/v1/trees/count")
+async def trees_count():
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT COUNT(*) FROM trees"))
+        count = result.scalar()
+    return {"count": count}
+
+
 @app.get("/api/v1/trees/{tree_id}")
 async def get_tree(tree_id: int):
     with engine.connect() as conn:
