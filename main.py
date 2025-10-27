@@ -115,6 +115,46 @@ async def trees_count():
     return {"count": count}
 
 
+@app.get("/api/v1/trees/search")
+async def search_trees(
+    bbox: str = Query(default=None),
+    limit: int = Query(default=50, le=100)
+):
+    if not bbox:
+        raise HTTPException(status_code=400, detail="bbox parameter required")
+
+    coords = bbox.split(",")
+    if len(coords) != 4:
+        raise HTTPException(status_code=400, detail="bbox must have 4 values")
+
+    try:
+        min_lon, min_lat, max_lon, max_lat = map(float, coords)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="bbox values must be numbers")
+
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT tree_id, genus_name, species_name, common_name,
+                   ST_X(geom) as longitude, ST_Y(geom) as latitude
+            FROM trees
+            WHERE geom && ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326)
+            LIMIT :limit
+        """), {
+            "min_lon": min_lon, "min_lat": min_lat,
+            "max_lon": max_lon, "max_lat": max_lat,
+            "limit": limit
+        })
+        rows = result.fetchall()
+
+    return {"data": [{
+        "id": row.tree_id,
+        "genus_name": row.genus_name,
+        "species_name": row.species_name,
+        "common_name": row.common_name,
+        "geometry": {"type": "Point", "coordinates": [row.longitude, row.latitude]}
+    } for row in rows]}
+
+
 @app.get("/api/v1/trees/{tree_id}")
 async def get_tree(tree_id: int):
     with engine.connect() as conn:
