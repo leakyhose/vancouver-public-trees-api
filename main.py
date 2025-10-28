@@ -120,10 +120,32 @@ async def search_trees(
     bbox: str = Query(default=None),
     coordinates: str = Query(default=None),
     radius: float = Query(default=None),
+    nearest: str = Query(default=None),
+    count: int = Query(default=None, le=100),
     limit: int = Query(default=50, le=100)
 ):
+    # nearest neighbor search
+    if nearest:
+        if bbox or coordinates or radius:
+            raise HTTPException(status_code=400, detail="Cannot combine nearest with other params")
+        try:
+            lat, lon = map(float, nearest.split(","))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid nearest format")
+        n = count if count else 10
+
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT tree_id, genus_name, species_name, common_name,
+                       ST_X(geom) as longitude, ST_Y(geom) as latitude
+                FROM trees
+                ORDER BY geom <-> ST_MakePoint(:lon, :lat)::geometry
+                LIMIT :n
+            """), {"lon": lon, "lat": lat, "n": n})
+            rows = result.fetchall()
+
     # radius search
-    if coordinates and radius:
+    elif coordinates and radius:
         if bbox:
             raise HTTPException(status_code=400, detail="Cannot use bbox with radius search")
         try:
@@ -169,7 +191,7 @@ async def search_trees(
             })
             rows = result.fetchall()
     else:
-        raise HTTPException(status_code=400, detail="Provide bbox or coordinates+radius")
+        raise HTTPException(status_code=400, detail="Provide bbox, coordinates+radius, or nearest")
 
     return {"data": [{
         "id": row.tree_id,
