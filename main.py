@@ -118,33 +118,58 @@ async def trees_count():
 @app.get("/api/v1/trees/search")
 async def search_trees(
     bbox: str = Query(default=None),
+    coordinates: str = Query(default=None),
+    radius: float = Query(default=None),
     limit: int = Query(default=50, le=100)
 ):
-    if not bbox:
-        raise HTTPException(status_code=400, detail="bbox parameter required")
+    # radius search
+    if coordinates and radius:
+        if bbox:
+            raise HTTPException(status_code=400, detail="Cannot use bbox with radius search")
+        try:
+            lat, lon = map(float, coordinates.split(","))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid coordinates format")
+        if radius <= 0:
+            raise HTTPException(status_code=400, detail="Radius must be positive")
 
-    coords = bbox.split(",")
-    if len(coords) != 4:
-        raise HTTPException(status_code=400, detail="bbox must have 4 values")
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT tree_id, genus_name, species_name, common_name,
+                       ST_X(geom) as longitude, ST_Y(geom) as latitude
+                FROM trees
+                WHERE ST_DWithin(geom::geography, ST_MakePoint(:lon, :lat)::geography, :radius)
+                LIMIT :limit
+            """), {"lon": lon, "lat": lat, "radius": radius, "limit": limit})
+            rows = result.fetchall()
 
-    try:
-        min_lon, min_lat, max_lon, max_lat = map(float, coords)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="bbox values must be numbers")
+    # bbox search
+    elif bbox:
+        if coordinates or radius:
+            raise HTTPException(status_code=400, detail="Cannot combine bbox with other spatial params")
+        coords = bbox.split(",")
+        if len(coords) != 4:
+            raise HTTPException(status_code=400, detail="bbox must have 4 values")
+        try:
+            min_lon, min_lat, max_lon, max_lat = map(float, coords)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="bbox values must be numbers")
 
-    with engine.connect() as conn:
-        result = conn.execute(text("""
-            SELECT tree_id, genus_name, species_name, common_name,
-                   ST_X(geom) as longitude, ST_Y(geom) as latitude
-            FROM trees
-            WHERE geom && ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326)
-            LIMIT :limit
-        """), {
-            "min_lon": min_lon, "min_lat": min_lat,
-            "max_lon": max_lon, "max_lat": max_lat,
-            "limit": limit
-        })
-        rows = result.fetchall()
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT tree_id, genus_name, species_name, common_name,
+                       ST_X(geom) as longitude, ST_Y(geom) as latitude
+                FROM trees
+                WHERE geom && ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326)
+                LIMIT :limit
+            """), {
+                "min_lon": min_lon, "min_lat": min_lat,
+                "max_lon": max_lon, "max_lat": max_lat,
+                "limit": limit
+            })
+            rows = result.fetchall()
+    else:
+        raise HTTPException(status_code=400, detail="Provide bbox or coordinates+radius")
 
     return {"data": [{
         "id": row.tree_id,
