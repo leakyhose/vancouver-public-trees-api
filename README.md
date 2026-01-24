@@ -1,21 +1,14 @@
-<table>
-<tr>
-<td>
+<img align="right" src="images/logo.png" alt="Vancouver Public Trees API Logo" width="250">
 
-<h1>Vancouver Public Trees API</h1>
+# Vancouver Public Trees API
 
 A REST API for the City of Vancouver's public tree dataset, providing fast geospatial queries via PostGIS.
 
-<h2>Overview</h2>
+## Overview
 
 This API exposes Vancouver's street tree inventory (~180,000 trees) through a clean REST interface. It supports standard filtering, pagination, and three types of spatial queries using PostGIS: bounding box, radius search, and nearest neighbor.
 
-</td>
-<td>
-<img src="images/logo.png" alt="Vancouver Public Trees API Logo" width="180">
-</td>
-</tr>
-</table>
+<br clear="both">
 
 ## Setup
 
