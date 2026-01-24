@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import text
 from .db import engine
+from redis_cache import redis_cache
 
 router = APIRouter(prefix="/api/v1/trees/search", tags=["search"])
 
 
+@redis_cache(3600)
 @router.get("")
 async def search_trees(
     bbox: str = Query(default=None),

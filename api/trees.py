@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import text
 from .db import engine
+from redis_cache import redis_cache
 
 router = APIRouter(prefix="/api/v1/trees", tags=["trees"])
 
 
+@redis_cache(3600)
 @router.get("")
 async def list_trees(
     limit: int = Query(default=50, le=100),
@@ -82,6 +84,7 @@ async def list_trees(
     }
 
 
+@redis_cache(3600)
 @router.get("/count")
 async def trees_count():
     with engine.connect() as conn:
@@ -90,6 +93,7 @@ async def trees_count():
     return {"count": count}
 
 
+@redis_cache(3600)
 @router.get("/{tree_id}")
 async def get_tree(tree_id: int):
     with engine.connect() as conn:
