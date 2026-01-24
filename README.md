@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="logo.png" alt="Vancouver Public Trees API Logo" />
+</div>
+
 # Vancouver Public Trees API
 
 A REST API for the City of Vancouver's public tree dataset, providing fast geospatial queries via PostGIS.
