@@ -1,6 +1,6 @@
 # Vancouver Public Trees API
 
-A REST API wrapper around the City of Vancouver's public tree dataset, providing fast geospatial queries via PostGIS.
+A REST API for the City of Vancouver's public tree dataset, providing fast geospatial queries via PostGIS.
 
 ## Overview
 
