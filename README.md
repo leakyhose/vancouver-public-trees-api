@@ -1,6 +1,6 @@
-<div align="center">
-  <img src="logo.png" alt="Vancouver Public Trees API Logo" />
-</div>
+<p align="center">
+  <img src="logo.png" alt="Vancouver Public Trees API Logo">
+</p>
 
 # Vancouver Public Trees API
 
