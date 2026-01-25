@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.jpg" alt="Vancouver Public Trees API Logo" width="200">
+  <img src="images/logo.jpg" alt="Vancouver Public Trees API Logo" width="1000">
 </p>
 
 # Vancouver Public Trees API
