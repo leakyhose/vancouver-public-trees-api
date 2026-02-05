@@ -31,7 +31,7 @@ async def search_trees(
                 SELECT tree_id, genus_name, species_name, common_name,
                        ST_X(geom) as longitude, ST_Y(geom) as latitude
                 FROM trees
-                ORDER BY geom <-> ST_MakePoint(:lon, :lat)::geometry
+                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geometry
                 LIMIT :n
             """), {"lon": lon, "lat": lat, "n": n})
             rows = result.fetchall()
@@ -52,7 +52,7 @@ async def search_trees(
                 SELECT tree_id, genus_name, species_name, common_name,
                        ST_X(geom) as longitude, ST_Y(geom) as latitude
                 FROM trees
-                WHERE ST_DWithin(geom::geography, ST_MakePoint(:lon, :lat)::geography, :radius)
+                WHERE ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :radius)
                 LIMIT :limit
             """), {"lon": lon, "lat": lat, "radius": radius, "limit": limit})
             rows = result.fetchall()
